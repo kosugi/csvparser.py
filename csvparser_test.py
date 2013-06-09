@@ -24,8 +24,11 @@ class TestCsvParser(unittest.TestCase):
         self.assertEqual([['']], self.parse('""'))
         self.assertEqual([['']], self.parse('""\n'))
         self.assertEqual([['']], self.parse('""\r\n'))
-        self.assertEqual([['"']], self.parse('""""\r\n'))
+        self.assertEqual([['a"b']], self.parse('"a""b"\r\n'))
         self.assertEqual([['a', 'b\nc', 'd']], self.parse('a,"b\nc",d'))
+        self.assertEqual([[',']], self.parse('","'))
+        self.assertEqual([['a'], ['b'], ['c'], ['d'], [''], ['e']], self.parse('a\rb\nc\r\nd\r\r\ne'))
+        self.assertEqual([['a'], ['b'], ['c'], ['d'], [''], ['e']], self.parse('"a"\r"b"\n"c"\r\n"d"\r\r\ne'))
 
 if __name__ == '__main__':
     unittest.main()

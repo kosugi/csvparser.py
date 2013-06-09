@@ -6,11 +6,21 @@ IN_COL = 3
 WAIT_LF = 4
 IN_QUOT = 5
 WAIT_QUOT = 6
+WAIT_LF_IN_QUOT = 7
 
 class CsvParser(object):
 
     def fin(self, c):
         self.doing = False
+
+    def to_bol(self, c):
+        self.status = BOL;
+
+    def to_boc(self, c):
+        self.status = BOC;
+
+    def to_in_col(self, c):
+        self.status = IN_COL
 
     def to_wait_lf(self, c):
         self.status = WAIT_LF
@@ -21,14 +31,8 @@ class CsvParser(object):
     def to_wait_quot(self, c):
         self.status = WAIT_QUOT
 
-    def to_in_col(self, c):
-        self.status = IN_COL
-
-    def to_bol(self, c):
-        self.status = BOL;
-
-    def to_boc(self, c):
-        self.status = BOC;
+    def to_wait_lf_in_quot(self, c):
+        self.status = WAIT_LF_IN_QUOT
 
     def push_row(self, c):
         self.rows.append(self.row)
@@ -72,20 +76,25 @@ class CsvParser(object):
             ('\n', [push_col, push_row, to_bol]),
             (',',  [push_col, push_row, push_col, to_boc]),
             ('"',  [push_col, push_row, to_in_quot]),
-            (None, [push_col, push_row, append_col, to_in_col]),
-            ],
+            (None, [push_col, push_row, append_col, to_in_col])],
         IN_QUOT: [
             ('',   [push_col, push_row, fin]),
             ('"',  [to_wait_quot]),
-            (None, [append_col]),
-            ],
+            (None, [append_col])],
         WAIT_QUOT: [
             ('',   [push_col, push_row, fin]),
-            ('\r', []),
+            ('\r', [to_wait_lf_in_quot]),
             ('\n', [push_col, push_row, to_bol]),
             (',',  [push_col, to_boc]),
             ('"',  [append_quote, to_in_quot]),
-            (None, [append_col, to_in_quot])]
+            (None, [append_col, to_in_quot])],
+        WAIT_LF_IN_QUOT: [
+            ('',   [push_col, push_row, fin]),
+            ('\r', [push_col, push_row, to_wait_lf]),
+            ('\n', [push_col, push_row, to_bol]),
+            (',',  [push_col, push_row, push_col, to_boc]),
+            ('"',  [push_col, push_row, to_in_quot]),
+            (None, [push_col, push_row, append_col, to_in_col])]
         }
 
     def parse(self, src):
